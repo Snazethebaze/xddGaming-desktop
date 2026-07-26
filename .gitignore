@@ -10,3 +10,6 @@ src-tauri/gen
 # Never commit signing keys
 *.key
 *.key.pub
+
+# Maintainer-only notes (kept off the public repo)
+MAINTAINING.md

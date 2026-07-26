@@ -75,5 +75,3 @@ settings (your token, name, and preferences).
 
 **[Tauri](https://tauri.app) (Rust) + React** — a tiny (~2 MB) native app, not an
 Electron behemoth. Cross-platform toolkit; currently shipped for Windows.
-
-Developer & release instructions live in **[MAINTAINING.md](MAINTAINING.md)**.
