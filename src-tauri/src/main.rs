@@ -674,19 +674,89 @@ async fn try_update(app: AppHandle) {
     }
 }
 
+// Native modal message box for the tray "About" dialog. Blocks the calling thread,
+// so always call it from a spawned thread (never the UI/event thread).
+#[cfg(windows)]
+fn message_box(title: &str, text: &str, yesno: bool) -> bool {
+    #[link(name = "user32")]
+    extern "system" {
+        fn MessageBoxW(hwnd: isize, text: *const u16, caption: *const u16, utype: u32) -> i32;
+    }
+    fn wide(s: &str) -> Vec<u16> {
+        s.encode_utf16().chain(std::iter::once(0)).collect()
+    }
+    const MB_OK: u32 = 0x0;
+    const MB_YESNO: u32 = 0x4;
+    const MB_ICONINFORMATION: u32 = 0x40;
+    let style = (if yesno { MB_YESNO } else { MB_OK }) | MB_ICONINFORMATION;
+    let r = unsafe { MessageBoxW(0, wide(text).as_ptr(), wide(title).as_ptr(), style) };
+    r == 6 // IDYES
+}
+#[cfg(not(windows))]
+fn message_box(_title: &str, _text: &str, _yesno: bool) -> bool {
+    false
+}
+
+// Interactive update check (from the tray About) — reports the outcome.
+async fn check_updates_interactive(app: AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+    let current = app.package_info().version.to_string();
+    let updater = match app.updater() {
+        Ok(u) => u,
+        Err(_) => {
+            message_box("Updates", "Couldn't check for updates right now.", false);
+            return;
+        }
+    };
+    match updater.check().await {
+        Ok(Some(update)) => {
+            let v = update.version.clone();
+            let prompt = format!("Version {v} is available (you have {current}).\n\nUpdate now?");
+            if message_box("Update available", &prompt, true) {
+                if update.download_and_install(|_c, _t| {}, || {}).await.is_ok() {
+                    app.restart();
+                } else {
+                    message_box("Updates", "Update failed. Please try again later.", false);
+                }
+            }
+        }
+        Ok(None) => {
+            message_box("Updates", &format!("You're on the latest version ({current})."), false);
+        }
+        Err(_) => {
+            message_box("Updates", "Couldn't reach the update server.", false);
+        }
+    }
+}
+
+fn show_about(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let ver = app.package_info().version.to_string();
+        let msg = format!(
+            "PoE Wishlist Overlay  v{ver}\nby Snazethebaze\n\ngithub.com/Snazethebaze/xddGaming-desktop\n\nCheck for updates now?"
+        );
+        if message_box("About", &msg, true) {
+            tauri::async_runtime::spawn(check_updates_interactive(app));
+        }
+    });
+}
+
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     use tauri::menu::{Menu, MenuItem};
     use tauri::tray::TrayIconBuilder;
 
     let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+    let about_i = MenuItem::with_id(app, "about", "About / check for updates", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&settings_i, &quit_i])?;
+    let menu = Menu::with_items(app, &[&settings_i, &about_i, &quit_i])?;
 
     let mut builder = TrayIconBuilder::new()
         .tooltip("PoE Wishlist Overlay")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "settings" => show_settings(app),
+            "about" => show_about(app),
             "quit" => app.exit(0),
             _ => {}
         });
