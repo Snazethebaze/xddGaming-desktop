@@ -73,6 +73,28 @@ small app.)
 
 ---
 
+## Auto-update & releasing
+
+The app **auto-updates**: on launch it checks this repo's latest release manifest
+(`.../releases/latest/download/latest.json`), and if there's a newer **signed**
+version it downloads, verifies the signature against the baked-in public key,
+installs, and relaunches. Silently no-ops if there's no update or you're offline.
+
+To cut a release (maintainer):
+
+1. Bump `version` in `src-tauri/tauri.conf.json` (and `package.json` to match).
+2. From `desktop/`, run:
+   ```powershell
+   powershell -File scripts/publish.ps1
+   ```
+   That builds a **signed** installer and publishes a GitHub release (installer +
+   `latest.json`). Installed apps pick it up on their next launch.
+
+**⚠️ The signing key is critical.** It lives at `~/.tauri/xddgaming_updater.key`
+(never in the repo). **Back it up.** If it's lost, you can't sign updates and
+auto-update breaks for everyone — recovering means shipping a new install with a
+new public key. The matching public key is in `tauri.conf.json` → `plugins.updater.pubkey`.
+
 ## How it works
 
 ```
