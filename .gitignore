@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.log
+
+# Rust build artifacts (multi-GB) + generated schemas
+src-tauri/target
+src-tauri/gen
+
+# Never commit signing keys
+*.key
+*.key.pub
