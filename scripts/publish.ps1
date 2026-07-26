@@ -4,7 +4,7 @@
 #         then from the desktop/ folder run:   powershell -File scripts/publish.ps1
 #
 # Prereqs: Rust toolchain on PATH, `gh` authenticated, and the updater signing key
-#          at ~/.tauri/xddgaming_updater.key (KEEP IT SAFE — losing it breaks updates).
+#          at ~/.tauri/xddgaming_updater.key (KEEP IT SAFE - losing it breaks updates).
 
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent) # -> desktop/
@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) { throw "tauri build failed" }
 # --- assemble the release assets ---
 $bundle = "src-tauri/target/release/bundle/nsis"
 $src = Join-Path $bundle "PoE Wishlist Overlay_$($version)_x64-setup.exe"
-if (-not (Test-Path "$src.sig")) { throw "Signature not found — was the key set? ($src.sig)" }
+if (-not (Test-Path "$src.sig")) { throw "Signature not found - was the key set? ($src.sig)" }
 $sig = (Get-Content "$src.sig" -Raw).Trim()
 
 $asset = "xddGaming-Overlay_$($version)_x64-setup.exe" # no spaces -> clean URL

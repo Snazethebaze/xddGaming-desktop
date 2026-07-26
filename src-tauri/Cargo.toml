@@ -1,6 +1,6 @@
 [package]
 name = "wishlist-overlay"
-version = "1.0.0"
+version = "1.0.1"
 description = "In-game overlay for the xddGaming PoE wishlist"
 authors = ["xddGaming"]
 edition = "2021"
