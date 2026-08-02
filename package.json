@@ -1,7 +1,7 @@
 {
   "name": "xddgaming-wishlist-overlay",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "In-game overlay for the xddGaming PoE wishlist (Tauri + React).",
   "scripts": {

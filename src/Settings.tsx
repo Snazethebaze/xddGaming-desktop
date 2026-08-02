@@ -45,7 +45,7 @@ export default function Settings() {
   const [toastEnabled, setToastEnabled] = useState(true)
   const [toastSound, setToastSound] = useState(true)
   const [toastCorner, setToastCorner] = useState('bottom-right')
-  const [pollSecs, setPollSecs] = useState(25)
+  const [pollSecs, setPollSecs] = useState(60)
   const [tab, setTab] = useState<Tab>('connection')
 
   async function connect(tok: string, keepIdentity: string) {
@@ -77,7 +77,8 @@ export default function Settings() {
         setToastEnabled(s.toast_enabled ?? true)
         setToastSound(s.toast_sound ?? true)
         setToastCorner(s.toast_corner || 'bottom-right')
-        setPollSecs(s.poll_secs || 25)
+        // Floor at 60s (matches the Rust clamp); migrates older 15/25/45s installs up.
+        setPollSecs(Math.max(60, s.poll_secs || 60))
         setToken(s.token || '')
         if (s.token) await connect(s.token, s.identity_id || '')
       })
@@ -240,10 +241,9 @@ export default function Settings() {
                 <div>
                   <label>Check every</label>
                   <select className="input" value={pollSecs} onChange={(e) => setPollSecs(Number(e.target.value))}>
-                    <option value={15}>15 seconds</option>
-                    <option value={25}>25 seconds</option>
-                    <option value={45}>45 seconds</option>
-                    <option value={90}>90 seconds</option>
+                    <option value={60}>1 minute</option>
+                    <option value={120}>2 minutes</option>
+                    <option value={300}>5 minutes</option>
                   </select>
                 </div>
               </div>

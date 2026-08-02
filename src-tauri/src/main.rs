@@ -43,7 +43,7 @@ fn default_corner() -> String {
     "bottom-right".to_string()
 }
 fn default_poll() -> u32 {
-    25
+    60
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -335,7 +335,10 @@ fn start_notifications_poll(app: AppHandle) {
         let mut was_running = false;
         loop {
             let s = load_settings(&app);
-            let secs = s.poll_secs.clamp(10, 300);
+            // Floor at 60s: the overlay only needs ~1-min notification latency, and
+            // this keeps Supabase edge invocations low even for older installs whose
+            // saved value predates this default.
+            let secs = s.poll_secs.clamp(60, 300);
             let running = poe_running();
 
             if running
@@ -564,7 +567,7 @@ fn update_settings(
         toast_enabled,
         toast_sound,
         toast_corner: if toast_corner.trim().is_empty() { default_corner() } else { toast_corner.trim().to_string() },
-        poll_secs: poll_secs.clamp(10, 300),
+        poll_secs: poll_secs.clamp(60, 300),
     };
     write_settings(&app, &s)?;
     let _ = register_hotkey(&app, &s.hotkey);
